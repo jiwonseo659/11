@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>학습 도우미</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Mono:wght@700&display=swap');
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a24;
+    --card: #22222e;
+    --accent: #7c6fff;
+    --accent2: #ff6b9d;
+    --accent3: #43e8b0;
+    --text: #f0eeff;
+    --muted: #7878a0;
+    --border: #2e2e40;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(124,111,255,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 80% 80%, rgba(255,107,157,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 0 80px; }
+  header { padding: 28px 20px 16px; display: flex; align-items: center; gap: 12px; }
+  .logo { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--accent); background: rgba(124,111,255,0.12); border: 1px solid rgba(124,111,255,0.3); padding: 4px 10px; border-radius: 6px; letter-spacing: 1px; }
+  .subtitle { font-size: 12px; color: var(--muted); }
+  .tab-nav { display: flex; gap: 8px; padding: 0 20px 20px; }
+  .tab-btn { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-family: 'Noto Sans KR', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .section { display: none; padding: 0 20px; }
+  .section.active { display: block; }
+  .subject-bar { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .subject-bar::-webkit-scrollbar { display: none; }
+  .subj-btn { white-space: nowrap; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'Noto Sans KR', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+  .subj-btn.active { background: rgba(67,232,176,0.15); border-color: var(--accent3); color: var(--accent3); }
+  .fc-counter { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 16px; letter-spacing: 1px; }
+  .fc-progress { height: 3px; background: var(--border); border-radius: 99px; margin-bottom: 24px; overflow: hidden; }
+  .fc-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 99px; transition: width 0.4s ease; }
+  .card-scene { perspective: 1000px; height: 240px; margin-bottom: 20px; cursor: pointer; }
+  .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .card-inner.flipped { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .card-front { background: var(--card); border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  .card-front::after { content: '탭해서 뒤집기'; position: absolute; bottom: 16px; font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+  .card-back { background: linear-gradient(135deg, rgba(124,111,255,0.2), rgba(255,107,157,0.15)); border: 1px solid rgba(124,111,255,0.4); transform: rotateY(180deg); box-shadow: 0 8px 32px rgba(124,111,255,0.2); }
+  .card-label { font-size: 11px; letter-spacing: 2px; color: var(--muted); margin-bottom: 12px; font-weight: 500; }
+  .card-term { font-size: 26px; font-weight: 900; text-align: center; line-height: 1.3; }
+  .card-def { font-size: 15px; font-weight: 500; text-align: center; line-height: 1.7; color: #e0dcff; }
+  .fc-nav { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; }
+  .fc-nav button { width: 48px; height: 48px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 20px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+  .fc-nav .btn-main { flex: 1; width: auto; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; font-weight: 700; background: rgba(124,111,255,0.15); border-color: rgba(124,111,255,0.4); color: var(--accent); }
+  .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .match-score { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--accent3); }
+  .match-reset { font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; }
+  .match-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .match-col { display: flex; flex-direction: column; gap: 8px; }
+  .match-col-label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-align: center; margin-bottom: 4px; }
+  .match-card { padding: 12px 10px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--card); text-align: center; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; line-height: 1.4; min-height: 52px; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; }
+  .match-card.selected { border-color: var(--accent); background: rgba(124,111,255,0.2); color: var(--accent); transform: scale(1.03); }
+  .match-card.matched { border-color: var(--accent3); background: rgba(67,232,176,0.1); color: var(--accent3); cursor: default; opacity: 0.8; }
+  .match-card.wrong { border-color: var(--accent2); background: rgba(255,107,157,0.15); animation: shake 0.3s ease; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .match-result { text-align: center; padding: 24px; background: linear-gradient(135deg, rgba(67,232,176,0.1), rgba(124,111,255,0.1)); border: 1px solid rgba(67,232,176,0.3); border-radius: 20px; display: none; }
+  .match-result.show { display: block; }
+  .match-result-emoji { font-size: 48px; margin-bottom: 12px; }
+  .match-result-text { font-size: 18px; font-weight: 900; margin-bottom: 8px; }
+  .match-result-sub { font-size: 13px; color: var(--muted); }
+  .match-result button { margin-top: 20px; padding: 12px 28px; background: var(--accent); border: none; border-radius: 12px; color: white; font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .edit-title { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .edit-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .edit-row { display: grid; grid-template-columns: 1fr 1fr 32px; gap: 8px; align-items: center; }
+  .edit-row input { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: 'Noto Sans KR', sans-serif; font-size: 13px; outline: none; transition: border-color 0.2s; }
+  .edit-row input:focus { border-color: var(--accent); }
+  .edit-row input::placeholder { color: var(--muted); }
+  .del-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: none; color: var(--muted); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .add-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1px dashed var(--border); background: none; color: var(--muted); font-family: 'Noto Sans KR', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; }
+  .save-btn { width: 100%; padding: 14px; border-radius: 14px; border: none; background: var(--accent); color: white; font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--accent3); color: #0f0f13; padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 700; z-index: 999; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .pw-wrong { border-color: #ff6b9d !important; animation: shake 0.3s ease; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <span class="logo">STUDY</span>
+    <span class="subtitle">플래시카드 + 매칭 퍼즐</span>
+  </header>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('flash')">📇 플래시카드</button>
+    <button class="tab-btn" onclick="switchTab('match')">🧩 매칭 퍼즐</button>
+    <button class="tab-btn" onclick="switchTab('edit')">✏️ 편집</button>
+  </div>
+  <div class="section active" id="sec-flash">
+    <div class="subject-bar" id="flash-subjects"></div>
+    <div id="flash-content"></div>
+  </div>
+  <div class="section" id="sec-match">
+    <div class="subject-bar" id="match-subjects"></div>
+    <div id="match-content"></div>
+  </div>
+  <div class="section" id="sec-edit">
+    <div class="subject-bar" id="edit-subjects"></div>
+    <div id="edit-content"></div>
+  </div>
+</div>
+
+<div id="pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a1a24;border:1px solid #2e2e40;border-radius:24px;padding:32px 24px;width:100%;max-width:320px;text-align:center;">
+    <div style="font-size:36px;margin-bottom:12px;">🔒</div>
+    <div style="font-size:16px;font-weight:900;margin-bottom:6px;">편집 모드</div>
+    <div style="font-size:13px;color:#7878a0;margin-bottom:24px;">비밀번호를 입력하세요</div>
+    <input id="pw-input" type="password" placeholder="비밀번호" style="width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid #2e2e40;background:#22222e;color:#f0eeff;font-size:16px;text-align:center;letter-spacing:4px;outline:none;font-family:'Noto Sans KR',sans-serif;transition:border-color 0.2s;" onkeydown="if(event.key==='Enter')submitPw()">
+    <div id="pw-error" style="display:none;font-size:12px;color:#ff6b9d;margin-top:8px;">❌ 비밀번호가 틀렸어요</div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button onclick="closePwModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid #2e2e40;background:none;color:#7878a0;font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;">취소</button>
+      <button onclick="submitPw()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#7c6fff;color:white;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">확인</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let data = JSON.parse(localStorage.getItem('studyData') || 'null') || {
+  subjects: [{
+    id: 's1', name: '예시 과목',
+    cards: [
+      { term: '용어 1', def: '설명을 여기에 입력하세요' },
+      { term: '용어 2', def: '설명을 여기에 입력하세요' },
+      { term: '용어 3', def: '설명을 여기에 입력하세요' },
+      { term: '용어 4', def: '설명을 여기에 입력하세요' },
+    ]
+  }]
+};
+function saveData() { localStorage.setItem('studyData', JSON.stringify(data)); }
+
+let currentTab = 'flash';
+let flashSubj = 0, flashIdx = 0, flashFlipped = false;
+let matchSubj = 0, editSubj = 0, matchState = {};
+const EDIT_PW = 'osung.zzang';
+let editUnlocked = false;
+
+function switchTab(tab) {
+  if (tab === 'edit' && !editUnlocked) { showPwModal(); return; }
+  currentTab = tab;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn')[['flash','match','edit'].indexOf(tab)].classList.add('active');
+  if (tab === 'flash') renderFlash();
+  if (tab === 'match') renderMatch();
+  if (tab === 'edit') renderEdit();
+}
+
+function showPwModal() { document.getElementById('pw-modal').style.display='flex'; document.getElementById('pw-input').value=''; setTimeout(()=>document.getElementById('pw-input').focus(),100); }
+function closePwModal() { document.getElementById('pw-modal').style.display='none'; }
+function submitPw() {
+  if (document.getElementById('pw-input').value === EDIT_PW) { editUnlocked=true; closePwModal(); switchTab('edit'); }
+  else { document.getElementById('pw-input').classList.add('pw-wrong'); document.getElementById('pw-error').style.display='block'; setTimeout(()=>document.getElementById('pw-input').classList.remove('pw-wrong'),500); }
+}
+
+function renderSubjectBar(containerId, activeIdx, onClick) {
+  const bar = document.getElementById(containerId);
+  bar.innerHTML = data.subjects.map((s,i) => `<button class="subj-btn ${i===activeIdx?'active':''}" onclick="${onClick}(${i})">${s.name}</button>`).join('') +
+    (containerId==='edit-subjects' ? `<button class="subj-btn" onclick="addSubject()">+ 과목 추가</button>` : '');
+}
+
+function renderFlash() {
+  renderSubjectBar('flash-subjects', flashSubj, 'setFlashSubj');
+  const subj = data.subjects[flashSubj];
+  const el = document.getElementById('flash-content');
+  if (!subj || subj.cards.length===0) { el.innerHTML=`<div class="empty-state"><div class="icon">📭</div><p>카드가 없어요.<br>편집 탭에서 추가해보세요!</p></div>`; return; }
+  const card = subj.cards[flashIdx];
+  const pct = ((flashIdx+1)/subj.cards.length*100).toFixed(0);
+  el.innerHTML = `
+    <div class="fc-counter">${flashIdx+1} / ${subj.cards.length}</div>
+    <div class="fc-progress"><div class="fc-progress-fill" style="width:${pct}%"></div></div>
+    <div class="card-scene" onclick="flipCard()">
+      <div class="card-inner ${flashFlipped?'flipped':''}" id="card-inner">
+        <div class="card-face card-front"><div class="card-label">용어</div><div class="card-term">${card.term}</div></div>
+        <div class="card-face card-back"><div class="card-label">설명</div><div class="card-def">${card.def}</div></div>
+      </div>
+    </div>
+    <div class="fc-nav">
+      <button onclick="fcPrev()">←</button>
+      <button class="btn-main" onclick="flipCard()">뒤집기</button>
+      <button onclick="fcNext()">→</button>
+    </div>`;
+}
+function setFlashSubj(i){flashSubj=i;flashIdx=0;flashFlipped=false;renderFlash();}
+function flipCard(){flashFlipped=!flashFlipped;renderFlash();}
+function fcNext(){flashIdx=(flashIdx+1)%data.subjects[flashSubj].cards.length;flashFlipped=false;renderFlash();}
+function fcPrev(){const l=data.subjects[flashSubj].cards.length;flashIdx=(flashIdx-1+l)%l;flashFlipped=false;renderFlash();}
+
+function setMatchSubj(i){matchSubj=i;initMatch();}
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function initMatch(){
+  const subj=data.subjects[matchSubj];
+  const pool=subj.cards.slice();
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const picked=pool.slice(0,Math.min(6,pool.length));
+  matchState={cards:picked,termOrder:shuffle([...Array(picked.length).keys()]),defOrder:shuffle([...Array(picked.length).keys()]),selectedTerm:null,selectedDef:null,matched:new Set(),attempts:0,startTime:Date.now()};
+  renderMatch();
+}
+function renderMatch(){
+  renderSubjectBar('match-subjects',matchSubj,'setMatchSubj');
+  const subj=data.subjects[matchSubj];
+  const el=document.getElementById('match-content');
+  if(!subj||subj.cards.length<2){el.innerHTML=`<div class="empty-state"><div class="icon">🧩</div><p>카드가 2개 이상 있어야<br>매칭 퍼즐을 할 수 있어요!</p></div>`;return;}
+  if(!matchState.cards)initMatch();
+  const ms=matchState;
+  const allMatched=ms.matched.size===ms.cards.length;
+  el.innerHTML=`
+    <div class="match-header"><span class="match-score">✓ ${ms.matched.size}/${ms.cards.length} 매칭</span><button class="match-reset" onclick="initMatch()">🔄 다시하기</button></div>
+    <div class="match-cols">
+      <div><div class="match-col-label">용어</div>${ms.termOrder.map(i=>{const c=ms.cards[i];return`<div class="match-card ${ms.matched.has(i)?'matched':''} ${ms.selectedTerm===i?'selected':''}" id="term-${i}" onclick="${ms.matched.has(i)?'':`selectTerm(${i})`}">${c.term}</div>`;}).join('')}</div>
+      <div><div class="match-col-label">설명</div>${ms.defOrder.map(i=>{const c=ms.cards[i];return`<div class="match-card ${ms.matched.has(i)?'matched':''} ${ms.selectedDef===i?'selected':''}" id="def-${i}" onclick="${ms.matched.has(i)?'':`selectDef(${i})`}">${c.def}</div>`;}).join('')}</div>
+    </div>
+    <div class="match-result ${allMatched?'show':''}"><div class="match-result-emoji">🎉</div><div class="match-result-text">전부 맞췄어요!</div><div class="match-result-sub">${ms.attempts}번 시도 · ${Math.floor((Date.now()-ms.startTime)/1000)}초</div><button onclick="initMatch()">다시 하기</button></div>`;
+}
+function selectTerm(i){if(matchState.matched.has(i))return;matchState.selectedTerm=(matchState.selectedTerm===i)?null:i;if(matchState.selectedTerm!==null&&matchState.selectedDef!==null)checkMatch();else renderMatch();}
+function selectDef(i){if(matchState.matched.has(i))return;matchState.selectedDef=(matchState.selectedDef===i)?null:i;if(matchState.selectedTerm!==null&&matchState.selectedDef!==null)checkMatch();else renderMatch();}
+function checkMatch(){
+  const t=matchState.selectedTerm,d=matchState.selectedDef;
+  matchState.attempts++;
+  if(t===d){matchState.matched.add(t);matchState.selectedTerm=null;matchState.selectedDef=null;showToast('✓ 정답!');renderMatch();}
+  else{renderMatch();setTimeout(()=>{const te=document.getElementById('term-'+t),de=document.getElementById('def-'+d);if(te)te.classList.add('wrong');if(de)de.classList.add('wrong');setTimeout(()=>{matchState.selectedTerm=null;matchState.selectedDef=null;renderMatch();},500);},10);}
+}
+
+function renderEdit(){
+  renderSubjectBar('edit-subjects',editSubj,'setEditSubj');
+  const subj=data.subjects[editSubj];
+  const el=document.getElementById('edit-content');
+  if(!subj){el.innerHTML='';return;}
+  el.innerHTML=`
+    <div class="edit-title">✏️ ${subj.name} 카드 편집
+      <button onclick="renameSubject()" style="margin-left:auto;font-size:11px;background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:8px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">이름 변경</button>
+      ${data.subjects.length>1?`<button onclick="deleteSubject()" style="font-size:11px;background:none;border:1px solid var(--border);color:var(--accent2);padding:4px 10px;border-radius:8px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">과목 삭제</button>`:''}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 32px;gap:8px;margin-bottom:8px">
+      <div style="font-size:11px;color:var(--muted);text-align:center;letter-spacing:1px">용어</div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;letter-spacing:1px">설명</div><div></div>
+    </div>
+    <div class="edit-list" id="edit-list">
+      ${subj.cards.map((c,i)=>`<div class="edit-row"><input type="text" placeholder="용어" value="${c.term}" oninput="updateCard(${i},'term',this.value)"><input type="text" placeholder="설명" value="${c.def}" oninput="updateCard(${i},'def',this.value)"><button class="del-btn" onclick="deleteCard(${i})">×</button></div>`).join('')}
+    </div>
+    <button class="add-btn" onclick="addCard()">+ 카드 추가</button>
+    <button class="save-btn" onclick="saveEdit()">저장하기</button>
+    <button class="save-btn" onclick="exportFile()" style="margin-top:10px;background:linear-gradient(135deg,#43e8b0,#7c6fff);color:#0f0f13;">📤 파일로 내보내기</button>`;
+}
+function setEditSubj(i){editSubj=i;renderEdit();}
+function updateCard(i,field,val){data.subjects[editSubj].cards[i][field]=val;}
+function deleteCard(i){data.subjects[editSubj].cards.splice(i,1);renderEdit();}
+function addCard(){data.subjects[editSubj].cards.push({term:'',def:''});renderEdit();setTimeout(()=>{const inputs=document.querySelectorAll('#edit-list .edit-row:last-child input');if(inputs[0])inputs[0].focus();},50);}
+function saveEdit(){saveData();matchState={};showToast('저장 완료!');}
+function addSubject(){const name=prompt('새 과목 이름:');if(!name)return;data.subjects.push({id:'s'+Date.now(),name,cards:[]});editSubj=data.subjects.length-1;saveData();renderEdit();}
+function renameSubject(){const name=prompt('새 이름:',data.subjects[editSubj].name);if(!name)return;data.subjects[editSubj].name=name;saveData();renderEdit();}
+function deleteSubject(){if(!confirm('삭제할까요?'))return;data.subjects.splice(editSubj,1);editSubj=0;saveData();renderEdit();}
+
+function exportFile(){
+  saveData();
+  const originalHtml=document.documentElement.outerHTML;
+  const dataJson=JSON.stringify(data);
+  const updated=originalHtml.replace(/let data = JSON\.parse\(localStorage\.getItem\('studyData'\) \|\| 'null'\) \|\|[\s\S]*?\}\s*\];/,`let data = ${dataJson};`);
+  const blob=new Blob([updated],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='학습도우미.html';a.click();
+  URL.revokeObjectURL(url);
+  showToast('📤 다운로드 완료!');
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
+renderFlash();
+</script>
+</body>
+</html>
